@@ -1,4 +1,4 @@
-import { useState,useRef } from 'react';
+import { useState,useRef,useEffect} from 'react';
 
 type User = { name: string; age: number };
 
@@ -17,6 +17,13 @@ const UserSearch: React.FC = () => {
     const foundUser = users.find((user) => user.name === name);
     setUser(foundUser);
   };
+
+  useEffect(()=>{
+    if(!inputRef.current){
+      return;
+    }
+    inputRef.current.focus();
+  },[]);
   return (
     <div>
       <h1>user search</h1>
