@@ -1,5 +1,6 @@
 import * as esbuild from 'esbuild-wasm';
 import axios from 'axios';
+import { url } from 'inspector';
 
 export const unpkgPathPlugin = () => {
   return {
@@ -9,11 +10,17 @@ export const unpkgPathPlugin = () => {
         console.log('onResole', args);
         if (args.path === 'index.js') {
           return { path: args.path, namespace: 'a' };
-        } else if (args.path === 'tiny-test-pkg') {
+        } 
+        if(args.path.includes('./') || args.path.includes('../')){
+          console.log(new URL(args.path, args.importer + '/').href)
           return {
-            path: 'https://unpkg.com/tiny-test-pkg@1.0.0/index.js',
-            namespace: 'a',
-          };
+            namespace:'a',
+            path:new URL(args.path, 'https://unpkg.com' + args.resolveDir + '/').href
+          }
+        }
+        return {
+          namespace:'a',
+          path:`https://unpkg.com/${args.path}`
         }
       });
 
@@ -24,12 +31,17 @@ export const unpkgPathPlugin = () => {
           return {
             loader: 'jsx',
             contents: `
-              import message from 'tiny-test-pkg';
+              import React,{useState} from 'react@16.0.0';
               console.log(message);
             `,
           };
         }
-        const data = 
+        const {data,request} = await axios.get(args.path);
+         return {
+           loader: 'jsx',
+           contents:data,
+           resolveDir: new URL('./', request.responseURL).pathname
+         }
       });
     },
   };
